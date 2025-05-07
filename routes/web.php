@@ -8,6 +8,7 @@ use App\Http\Controllers\SuperAdminController;
 use App\Http\Controllers\InternController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\MessageController;
 
 
 // Guest Routes (User)
@@ -31,6 +32,16 @@ Route::middleware(['auth'])->group(function () {
         request()->session()->regenerateToken();
         return redirect('/login');
     })->name('logout');
+
+    // Messaging routes for both admins and users
+    Route::middleware(['admin_or_user'])->group(function () {
+        Route::get('/messages', [MessageController::class, 'index'])->name('messages.index');
+        Route::get('/messages/{message}', [MessageController::class, 'show'])->name('messages.show');
+        Route::post('/messages', [MessageController::class, 'store'])->name('messages.store');
+        Route::put('/messages/{message}', [MessageController::class, 'update'])->name('messages.update');
+        Route::delete('/messages/{message}', [MessageController::class, 'destroy'])->name('messages.destroy');
+        Route::post('/messages/{message}/read', [MessageController::class, 'markAsRead'])->name('messages.mark-as-read');
+    });
 });
 
 // Admin Routes
@@ -61,6 +72,9 @@ Route::prefix('admin')->group(function () {
 
         // User Management Routes
         Route::delete('/users/{user}', [AdminController::class, 'deleteUser'])->name('admin.delete-user');
+
+        // Admin-specific Message Routes
+        Route::get('/messages/create', [MessageController::class, 'create'])->name('messages.create');
 
         // Comment routes
         Route::get('/tasks/{task}/comments', [CommentController::class, 'index'])->name('comments.index');

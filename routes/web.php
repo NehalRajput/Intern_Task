@@ -7,6 +7,7 @@ use App\Http\Controllers\TaskController;
 use App\Http\Controllers\SuperAdminController;
 use App\Http\Controllers\InternController;
 use App\Http\Controllers\CommentController;
+use App\Http\Controllers\AdminController;
 
 
 // Guest Routes (User)
@@ -57,6 +58,9 @@ Route::prefix('admin')->group(function () {
         Route::delete('/tasks/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
         Route::post('/tasks/{task}/assign-intern', [TaskController::class, 'assignIntern'])->name('tasks.assign-intern');
         Route::delete('/tasks/{task}/interns/{intern}', [TaskController::class, 'detachIntern'])->name('tasks.detach-intern');
+
+        // User Management Routes
+        Route::delete('/users/{user}', [AdminController::class, 'deleteUser'])->name('admin.delete-user');
 
         // Comment routes
         Route::get('/tasks/{task}/comments', [CommentController::class, 'index'])->name('comments.index');

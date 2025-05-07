@@ -16,6 +16,7 @@ return new class extends Migration
             $table->text('content');
             $table->foreignId('task_id')->constrained()->onDelete('cascade');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->boolean('is_query')->default(false);
             $table->timestamps();
         });
     }

@@ -12,12 +12,14 @@ class CommentController extends Controller
     public function store(Request $request, Task $task)
     {
         $request->validate([
-            'content' => 'required|string'
+            'content' => 'required|string',
+            'is_query' => 'boolean'
         ]);
 
         $task->comments()->create([
             'content' => $request->content,
-            'user_id' => Auth::id()
+            'user_id' => Auth::id(),
+            'is_query' => $request->is_query ?? false
         ]);
 
         return redirect()->back()->with('success', 'Comment added successfully');

@@ -82,4 +82,5 @@ Route::prefix('super-admin')->middleware(['auth', 'super_admin'])->group(functio
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/intern/tasks', [InternController::class, 'tasks'])->name('intern.tasks');
+    Route::put('/intern/tasks/{task}/status', [InternController::class, 'updateTaskStatus'])->name('intern.update-task-status');
 });

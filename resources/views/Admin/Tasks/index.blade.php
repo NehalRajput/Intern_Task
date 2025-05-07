@@ -176,7 +176,14 @@
                         <div class="bg-gray-50 rounded-lg p-3">
                             <div class="flex justify-between items-start">
                                 <div class="flex-1">
-                                    <div id="comment-content-{{ $comment->id }}" class="text-sm text-gray-800">{{ $comment->content }}</div>
+                                    <div class="flex items-center space-x-2">
+                                        @if($comment->is_query)
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                                Query
+                                            </span>
+                                        @endif
+                                        <div id="comment-content-{{ $comment->id }}" class="text-sm text-gray-800">{{ $comment->content }}</div>
+                                    </div>
                                     <form id="edit-form-{{ $comment->id }}" action="{{ route('comments.update', $comment->id) }}" method="POST" class="hidden">
                                         @csrf
                                         @method('PUT')

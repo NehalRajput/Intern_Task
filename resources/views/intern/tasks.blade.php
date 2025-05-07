@@ -51,9 +51,19 @@
                                     <div class="text-sm text-gray-500">{{ $task->due_date ? date('M d, Y', strtotime($task->due_date)) : 'No due date' }}</div>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                        {{ $task->status ?? 'Pending' }}
-                                    </span>
+                                    <form action="{{ route('intern.update-task-status', $task->id) }}" method="POST" class="inline">
+                                        @csrf
+                                        @method('PUT')
+                                        <select name="status" onchange="this.form.submit()" 
+                                                class="text-sm rounded-full px-3 py-1 font-semibold
+                                                @if($task->status === 'completed') bg-green-100 text-green-800
+                                                @elseif($task->status === 'todo') bg-blue-100 text-blue-800
+                                                @else bg-yellow-100 text-yellow-800 @endif">
+                                            <option value="pending" {{ $task->status === 'pending' ? 'selected' : '' }}>Pending</option>
+                                            <option value="todo" {{ $task->status === 'todo' ? 'selected' : '' }}>To Do</option>
+                                            <option value="completed" {{ $task->status === 'completed' ? 'selected' : '' }}>Completed</option>
+                                        </select>
+                                    </form>
                                 </td>
                                 <td class="px-6 py-4">
                                     <button onclick="openCommentsModal({{ $task->id }})" 
@@ -97,7 +107,14 @@
                         <div class="bg-gray-50 rounded-lg p-3">
                             <div class="flex justify-between items-start">
                                 <div class="flex-1">
-                                    <p class="text-sm text-gray-800">{{ $comment->content }}</p>
+                                    <div class="flex items-center space-x-2">
+                                        @if($comment->is_query)
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                                Query
+                                            </span>
+                                        @endif
+                                        <p class="text-sm text-gray-800">{{ $comment->content }}</p>
+                                    </div>
                                     <p class="text-xs text-gray-500 mt-1">
                                         By {{ $comment->user->name }} • {{ $comment->created_at->diffForHumans() }}
                                     </p>
@@ -108,6 +125,26 @@
                         <p class="text-sm text-gray-500 text-center">No comments yet</p>
                     @endforelse
                 </div>
+
+                <!-- Add Comment Form -->
+                <form action="{{ route('comments.store', $task->id) }}" method="POST" class="space-y-4">
+                    @csrf
+                    <div>
+                        <label for="content" class="block text-sm font-medium text-gray-700 mb-1">Add Comment</label>
+                        <textarea name="content" id="content" rows="3" 
+                                  class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-md"
+                                  placeholder="Write your comment here..."></textarea>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <input type="checkbox" name="is_query" id="is_query" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                        <label for="is_query" class="text-sm text-gray-700">Mark as Query</label>
+                    </div>
+                    <div class="flex justify-end">
+                        <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 rounded-md">
+                            Add Comment
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

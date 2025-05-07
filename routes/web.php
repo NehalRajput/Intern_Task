@@ -71,7 +71,7 @@ Route::prefix('admin')->middleware('auth:admin')->group(function () {
             'tasks' => App\Models\Task::with('interns')->get(),
             'interns' => App\Models\User::where('role', 'intern')->get()
         ]);
-    })->name('admin.dashboard');
+        })->name('admin.dashboard');
 
     // Task management
     Route::controller(TaskController::class)->group(function () {
@@ -97,10 +97,10 @@ Route::prefix('admin')->middleware('auth:admin')->group(function () {
     });
 
     // Admin logout
-    Route::post('/logout', function () {
-        auth('admin')->logout();
-        request()->session()->invalidate();
-        request()->session()->regenerateToken();
-        return redirect()->route('admin.login');
-    })->name('admin.logout');
+        Route::post('/logout', function () {
+            auth('admin')->logout();
+            request()->session()->invalidate();
+            request()->session()->regenerateToken();
+            return redirect()->route('admin.login');
+        })->name('admin.logout');
 });

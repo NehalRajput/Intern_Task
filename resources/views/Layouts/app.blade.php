@@ -27,10 +27,7 @@
                             </a>
 
                             <!-- Messages Link -->
-                            <button type="button" onclick="openChatModal()" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium leading-5 text-gray-500 hover:text-blue-700 hover:border-blue-400 focus:outline-none focus:text-blue-700 focus:border-blue-400 transition">
-                                <svg class="w-5 h-5 mr-1 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2h5m6-4v-4m0 0V4m0 4l-2-2m2 2l2-2"/></svg>
-                                Messages
-                            </button>
+                
 
                             @if(auth()->user()->role === 'admin')
                                 <a href="{{ route('tasks.index') }}" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium leading-5 text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300 transition">

@@ -16,7 +16,7 @@ class AdminOrUserAuthenticated
     public function handle(Request $request, Closure $next): Response
     {
         if (auth()->check() || auth('admin')->check()) {
-            return $next($request);
+        return $next($request);
         }
         return redirect()->route('login');
     }

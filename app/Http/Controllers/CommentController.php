@@ -15,15 +15,12 @@ class CommentController extends Controller
             'content' => 'required|string'
         ]);
 
-        $comment = $task->comments()->create([
+        $task->comments()->create([
             'content' => $request->content,
             'user_id' => Auth::id()
         ]);
 
-        return response()->json([
-            'message' => 'Comment added successfully',
-            'comment' => $comment->load('user')
-        ]);
+        return redirect()->back()->with('success', 'Comment added successfully');
     }
 
     public function index(Task $task)
@@ -32,13 +29,30 @@ class CommentController extends Controller
         return response()->json($comments);
     }
 
+    public function update(Request $request, Comment $comment)
+    {
+        if (Auth::user()->role !== 'admin') {
+            return redirect()->back()->with('error', 'Unauthorized');
+        }
+
+        $request->validate([
+            'content' => 'required|string'
+        ]);
+
+        $comment->update([
+            'content' => $request->content
+        ]);
+
+        return redirect()->back()->with('success', 'Comment updated successfully');
+    }
+
     public function destroy(Comment $comment)
     {
         if (Auth::user()->role !== 'admin') {
-            return response()->json(['message' => 'Unauthorized'], 403);
+            return redirect()->back()->with('error', 'Unauthorized');
         }
 
         $comment->delete();
-        return response()->json(['message' => 'Comment deleted successfully']);
+        return redirect()->back()->with('success', 'Comment deleted successfully');
     }
 }

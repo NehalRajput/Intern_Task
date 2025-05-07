@@ -22,12 +22,11 @@
               <th class="px-6 py-3 font-medium text-gray-700">Description</th>
               <th class="px-6 py-3 font-medium text-gray-700">Due Date</th>
               <th class="px-6 py-3 font-medium text-gray-700">Assigned Interns</th>
+              <th class="px-6 py-3 font-medium text-gray-700">Comments</th>
               <th class="px-6 py-3 font-medium text-gray-700">Actions</th>
-              <!-- Add this in the table header -->
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Assign</th>
             </tr>
           </thead>
-          <!-- Replace the entire table body section -->
           <tbody class="bg-white divide-y divide-gray-100">
               @forelse ($tasks as $task)
                   <tr>
@@ -63,6 +62,15 @@
                               @endforelse
                           </div>
                       </td>
+                      <td class="px-6 py-4">
+                          <button onclick="openCommentsModal({{ $task->id }})" 
+                                  class="inline-flex items-center px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700 transition-colors">
+                              <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                              </svg>
+                              Comments
+                          </button>
+                      </td>
                       <td class="px-6 py-4 text-right text-sm font-medium space-x-2">
                           <a href="{{ route('tasks.edit', $task->id) }}" 
                              class="inline-flex items-center px-3 py-1.5 bg-indigo-600 text-white text-sm font-medium rounded hover:bg-indigo-700 transition-colors">
@@ -95,7 +103,7 @@
                   </tr>
               @empty
                   <tr>
-                      <td colspan="6" class="px-6 py-4 text-center text-gray-500">
+                      <td colspan="7" class="px-6 py-4 text-center text-gray-500">
                           No tasks found
                       </td>
                   </tr>
@@ -106,7 +114,7 @@
     </div>
   </div>
 </div>
-<!-- Add this after the table -->
+
 @foreach($tasks as $task)
     <!-- Assign Modal -->
     <div id="assignModal{{ $task->id }}" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
@@ -136,6 +144,65 @@
             </div>
         </div>
     </div>
+
+    <!-- Comments Modal -->
+    <div id="commentsModal{{ $task->id }}" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">Comments</h3>
+                    <button onclick="closeCommentsModal({{ $task->id }})" class="text-gray-400 hover:text-gray-500">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- Comments List -->
+                <div class="space-y-4 mb-4 max-h-96 overflow-y-auto">
+                    @forelse($task->comments as $comment)
+                        <div class="bg-gray-50 rounded-lg p-3">
+                            <div class="flex justify-between items-start">
+                                <div class="flex-1">
+                                    <p class="text-sm text-gray-800">{{ $comment->content }}</p>
+                                    <p class="text-xs text-gray-500 mt-1">
+                                        By {{ $comment->user->name }} • {{ $comment->created_at->diffForHumans() }}
+                                    </p>
+                                </div>
+                                <form action="{{ route('comments.destroy', $comment->id) }}" method="POST" class="ml-2">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="text-red-600 hover:text-red-800">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    @empty
+                        <p class="text-sm text-gray-500 text-center">No comments yet</p>
+                    @endforelse
+                </div>
+
+                <!-- Add Comment Form -->
+                <form action="{{ route('comments.store', $task->id) }}" method="POST" class="space-y-4">
+                    @csrf
+                    <div>
+                        <label for="content" class="block text-sm font-medium text-gray-700 mb-1">Add Comment</label>
+                        <textarea name="content" id="content" rows="3" 
+                                  class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-md"
+                                  placeholder="Write your comment here..."></textarea>
+                    </div>
+                    <div class="flex justify-end">
+                        <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 rounded-md">
+                            Add Comment
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 @endforeach
 
 <!-- Add this JavaScript at the bottom of the file -->
@@ -146,6 +213,14 @@ function openAssignModal(taskId) {
 
 function closeAssignModal(taskId) {
     document.getElementById('assignModal' + taskId).classList.add('hidden');
+}
+
+function openCommentsModal(taskId) {
+    document.getElementById('commentsModal' + taskId).classList.remove('hidden');
+}
+
+function closeCommentsModal(taskId) {
+    document.getElementById('commentsModal' + taskId).classList.add('hidden');
 }
 </script>
 @endsection

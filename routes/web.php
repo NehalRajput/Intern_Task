@@ -2,7 +2,6 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\SuperAdminController;
 use App\Http\Controllers\InternController;
@@ -10,22 +9,26 @@ use App\Http\Controllers\CommentController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\MessageController;
 
-
-// Guest Routes (User)
-Route::middleware(['guest'])->group(function () {
-    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-    Route::post('/login', [AuthController::class, 'login']);
-
-    Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
-    Route::post('/register', [AuthController::class, 'register']);
+// Guest Routes (Unauthenticated Users)
+Route::middleware('guest')->group(function () {
+    // User authentication
+    Route::controller(AuthController::class)->group(function () {
+        Route::get('/login', 'showLogin')->name('login');
+        Route::post('/login', 'login');
+        Route::get('/register', 'showRegister')->name('register');
+        Route::post('/register', 'register');
+        
+        // Admin authentication
+        Route::prefix('admin')->group(function () {
+            Route::get('/login', 'showAdminLogin')->name('admin.login');
+            Route::post('/login', 'adminLogin')->name('admin.authenticate');
+        });
+    });
 });
 
 // Authenticated User Routes
-Route::middleware(['auth'])->group(function () {
-    Route::get('/dashboard', function () {
-        return view('dashboard');
-    })->name('dashboard');
-
+Route::middleware('auth')->group(function () {
+    // Common logout for all auth types
     Route::post('/logout', function () {
         auth()->logout();
         request()->session()->invalidate();
@@ -33,72 +36,71 @@ Route::middleware(['auth'])->group(function () {
         return redirect('/login');
     })->name('logout');
 
-    // Messaging routes for both admins and users
-    Route::middleware(['admin_or_user'])->group(function () {
-        Route::get('/messages', [MessageController::class, 'index'])->name('messages.index');
-        Route::get('/messages/{message}', [MessageController::class, 'show'])->name('messages.show');
-        Route::post('/messages', [MessageController::class, 'store'])->name('messages.store');
-        Route::put('/messages/{message}', [MessageController::class, 'update'])->name('messages.update');
-        Route::delete('/messages/{message}', [MessageController::class, 'destroy'])->name('messages.destroy');
-        Route::post('/messages/{message}/read', [MessageController::class, 'markAsRead'])->name('messages.mark-as-read');
+    // Dashboard for regular users
+    Route::get('/dashboard', fn() => view('dashboard'))->name('dashboard');
+
+    // Intern-specific routes
+    Route::prefix('intern')->group(function () {
+        Route::get('/tasks', [InternController::class, 'tasks'])->name('intern.tasks');
+        Route::put('/tasks/{task}/status', [InternController::class, 'updateTaskStatus'])
+            ->name('intern.update-task-status');
     });
+
+    // Super Admin routes
+    Route::prefix('super-admin')->middleware('super_admin')->group(function () {
+        Route::controller(SuperAdminController::class)->group(function () {
+            Route::get('/dashboard', 'dashboard')->name('super_admin.dashboard');
+            Route::get('/manage-users', 'manageUsers')->name('super_admin.manage_users');
+            Route::put('/users/{user}/update-type', 'updateUserType')
+                ->name('super_admin.update_user_type');
+        });
+    });
+
+    // Message routes
+    Route::get('/messages', [MessageController::class, 'index'])->name('messages.index');
+    Route::get('/messages/{user}', [MessageController::class, 'show'])->name('messages.show');
+    Route::post('/messages', [MessageController::class, 'store'])->name('messages.store');
+    Route::get('/messages/unread/count', [MessageController::class, 'getUnreadCount'])->name('messages.unread.count');
 });
 
 // Admin Routes
-Route::prefix('admin')->group(function () {
-    // Admin Guest Routes
-    Route::middleware(['guest:admin'])->group(function () {
-        Route::get('/login', [AuthController::class, 'showAdminLogin'])->name('admin.login');
-        Route::post('/login', [AuthController::class, 'adminLogin'])->name('admin.authenticate');
+Route::prefix('admin')->middleware('auth:admin')->group(function () {
+    // Admin dashboard
+    Route::get('/dashboard', function () {
+        return view('Admin.dashboard', [
+            'tasks' => App\Models\Task::with('interns')->get(),
+            'interns' => App\Models\User::where('role', 'intern')->get()
+        ]);
+    })->name('admin.dashboard');
+
+    // Task management
+    Route::controller(TaskController::class)->group(function () {
+        Route::get('/tasks', 'index')->name('tasks.index');
+        Route::get('/tasks/create', 'create')->name('tasks.create');
+        Route::post('/tasks', 'store')->name('tasks.store');
+        Route::get('/tasks/{task}/edit', 'edit')->name('tasks.edit');
+        Route::put('/tasks/{task}', 'update')->name('tasks.update');
+        Route::delete('/tasks/{task}', 'destroy')->name('tasks.destroy');
+        Route::post('/tasks/{task}/assign-intern', 'assignIntern')->name('tasks.assign-intern');
+        Route::delete('/tasks/{task}/interns/{intern}', 'detachIntern')->name('tasks.detach-intern');
     });
 
-    // Admin Authenticated Routes
-    Route::middleware(['auth:admin'])->group(function () {
-        Route::get('/dashboard', function () {
-            $tasks = App\Models\Task::with('interns')->get();
-            $interns = App\Models\User::where('role', 'intern')->get();
-            return view('Admin.dashboard', compact('tasks', 'interns'));
-        })->name('admin.dashboard');
+    // User management
+    Route::delete('/users/{user}', [AdminController::class, 'deleteUser'])->name('admin.delete-user');
 
-        // Task Management Routes
-        Route::get('/tasks', [TaskController::class, 'index'])->name('tasks.index');
-        Route::get('/tasks/create', [TaskController::class, 'create'])->name('tasks.create');
-        Route::post('/tasks', [TaskController::class, 'store'])->name('tasks.store');
-        Route::get('/tasks/{task}/edit', [TaskController::class, 'edit'])->name('tasks.edit');
-        Route::put('/tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
-        Route::delete('/tasks/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
-        Route::post('/tasks/{task}/assign-intern', [TaskController::class, 'assignIntern'])->name('tasks.assign-intern');
-        Route::delete('/tasks/{task}/interns/{intern}', [TaskController::class, 'detachIntern'])->name('tasks.detach-intern');
-
-        // User Management Routes
-        Route::delete('/users/{user}', [AdminController::class, 'deleteUser'])->name('admin.delete-user');
-
-        // Admin-specific Message Routes
-        Route::get('/messages/create', [MessageController::class, 'create'])->name('messages.create');
-
-        // Comment routes
-        Route::get('/tasks/{task}/comments', [CommentController::class, 'index'])->name('comments.index');
-        Route::post('/tasks/{task}/comments', [CommentController::class, 'store'])->name('comments.store');
-        Route::put('/comments/{comment}', [CommentController::class, 'update'])->name('comments.update');
-        Route::delete('/comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
-
-        Route::post('/logout', function () {
-            auth('admin')->logout();
-            request()->session()->invalidate();
-            request()->session()->regenerateToken();
-            return redirect()->route('admin.login');
-        })->name('admin.logout');
+    // Comments
+    Route::controller(CommentController::class)->group(function () {
+        Route::get('/tasks/{task}/comments', 'index')->name('comments.index');
+        Route::post('/tasks/{task}/comments', 'store')->name('comments.store');
+        Route::put('/comments/{comment}', 'update')->name('comments.update');
+        Route::delete('/comments/{comment}', 'destroy')->name('comments.destroy');
     });
-});
 
-// Super Admin Routes
-Route::prefix('super-admin')->middleware(['auth', 'super_admin'])->group(function () {
-    Route::get('/dashboard', [SuperAdminController::class, 'dashboard'])->name('super_admin.dashboard');
-    Route::get('/manage-users', [SuperAdminController::class, 'manageUsers'])->name('super_admin.manage_users');
-    Route::put('/users/{user}/update-type', [SuperAdminController::class, 'updateUserType'])->name('super_admin.update_user_type');
-});
-
-Route::middleware(['auth'])->group(function () {
-    Route::get('/intern/tasks', [InternController::class, 'tasks'])->name('intern.tasks');
-    Route::put('/intern/tasks/{task}/status', [InternController::class, 'updateTaskStatus'])->name('intern.update-task-status');
+    // Admin logout
+    Route::post('/logout', function () {
+        auth('admin')->logout();
+        request()->session()->invalidate();
+        request()->session()->regenerateToken();
+        return redirect()->route('admin.login');
+    })->name('admin.logout');
 });

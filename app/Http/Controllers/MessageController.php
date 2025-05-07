@@ -11,91 +11,69 @@ class MessageController extends Controller
 {
     public function index()
     {
-        $user = Auth::user();
-        $messages = Message::where('receiver_id', $user->id)
-            ->orWhere('sender_id', $user->id)
-            ->whereNull('parent_id')
-            ->with(['sender', 'receiver', 'replies.sender'])
-            ->latest()
-            ->get();
+        $users = User::where('id', '!=', Auth::id())->get();
+        $messages = Message::where('sender_id', Auth::id())
+            ->orWhere('receiver_id', Auth::id())
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->groupBy(function($message) {
+                return $message->sender_id === Auth::id() ? $message->receiver_id : $message->sender_id;
+            });
 
-        $interns = [];
-        if ($user->role === 'admin') {
-            $interns = User::where('role', 'intern')->get();
-        }
-
-        return view('messages.index', compact('messages', 'interns'));
+        return view('messages.index', compact('users', 'messages'));
     }
 
-    public function show(Message $message)
+    public function show($userId)
     {
-        $message->load(['sender', 'receiver', 'replies.sender']);
-        return view('messages.show', compact('message'));
-    }
+        $user = User::findOrFail($userId);
+        $messages = Message::where(function($query) use ($userId) {
+            $query->where('sender_id', Auth::id())
+                  ->where('receiver_id', $userId);
+        })->orWhere(function($query) use ($userId) {
+            $query->where('sender_id', $userId)
+                  ->where('receiver_id', Auth::id());
+        })->orderBy('created_at', 'asc')->get();
 
-    public function create()
-    {
-        $interns = User::where('role', 'intern')->get();
-        return view('messages.create', compact('interns'));
+        // Mark messages as read
+        Message::where('sender_id', $userId)
+            ->where('receiver_id', Auth::id())
+            ->where('is_read', false)
+            ->update(['is_read' => true]);
+
+        return view('messages.show', compact('user', 'messages'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'content' => 'required|string',
             'receiver_id' => 'required|exists:users,id',
-            'parent_id' => 'nullable|exists:messages,id'
+            'message' => 'required|string',
+            'task_id' => 'nullable|exists:tasks,id'
         ]);
 
         $message = Message::create([
-            'content' => $request->content,
             'sender_id' => Auth::id(),
             'receiver_id' => $request->receiver_id,
-            'parent_id' => $request->parent_id
+            'message' => $request->message,
+            'task_id' => $request->task_id
         ]);
 
-        return redirect()->route('messages.index')
-            ->with('success', 'Message sent successfully');
-    }
+        // Broadcast the message
+        broadcast(new \App\Events\NewMessage($message))->toOthers();
 
-    public function update(Request $request, Message $message)
-    {
-        // Only allow the sender to edit their message
-        if ($message->sender_id !== Auth::id()) {
-            return redirect()->back()->with('error', 'You can only edit your own messages');
+        if ($request->ajax()) {
+            return response()->json($message);
         }
 
-        $request->validate([
-            'content' => 'required|string'
-        ]);
-
-        $message->update([
-            'content' => $request->content
-        ]);
-
-        return redirect()->back()->with('success', 'Message updated successfully');
+        return redirect()->back();
     }
 
-    public function destroy(Message $message)
+    public function getUnreadCount()
     {
-        // Only allow the sender to delete their message
-        if ($message->sender_id !== Auth::id()) {
-            return redirect()->back()->with('error', 'You can only delete your own messages');
-        }
+        $count = Message::where('receiver_id', Auth::id())
+            ->where('is_read', false)
+            ->count();
 
-        // Delete all replies to this message
-        $message->replies()->delete();
-        
-        // Delete the message
-        $message->delete();
-
-        return redirect()->route('messages.index')
-            ->with('success', 'Message deleted successfully');
-    }
-
-    public function markAsRead(Message $message)
-    {
-        $message->update(['is_read' => true]);
-        return response()->json(['success' => true]);
+        return response()->json(['count' => $count]);
     }
 } 

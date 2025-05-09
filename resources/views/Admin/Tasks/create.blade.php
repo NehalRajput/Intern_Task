@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('Layouts.app')
 
 @section('content')
 <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
@@ -27,7 +27,7 @@
 
                 <!-- Show "New Task" button only in create mode -->
                 @if (!isset($task))
-                <a href="{{ route('tasks.create') }}"
+                <a href="{{ route('admin.tasks.create') }}"
                    class="absolute right-4 top-4 inline-flex items-center px-3 py-2 bg-indigo-500 text-white text-sm font-medium rounded hover:bg-indigo-600 shadow">
                     + New Task
                 </a>
@@ -35,7 +35,7 @@
             </div>
 
             <!-- Form -->
-            <form method="POST" action="{{ isset($task) ? route('tasks.update', $task) : route('tasks.store') }}" class="divide-y divide-gray-200">
+            <form method="POST" action="{{ isset($task) ? route('admin.tasks.update', $task) : route('admin.tasks.store') }}" class="divide-y divide-gray-200">
                 @csrf
                 @if(isset($task)) @method('PUT') @endif
 

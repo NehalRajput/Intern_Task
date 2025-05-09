@@ -1,6 +1,7 @@
-@extends('layouts.app')
+@extends('Layouts.app')
 
 @section('content')
+
 <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 
 <div class="min-h-screen bg-gray-100 py-6 flex flex-col lg:flex-row gap-6">
@@ -34,7 +35,7 @@
     <!-- Task Management Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
       <!-- View Tasks -->
-      <a href="{{ route('tasks.index') }}"
+      <a href="{{ route('admin.tasks.index') }}"
          class="block bg-white rounded-lg border hover:shadow-md transition p-6">
         <div class="flex items-center">
           <div class="bg-blue-500 p-3 rounded shadow-inner">
@@ -48,7 +49,7 @@
       </a>
 
       <!-- Create Task -->
-      <a href="{{ route('tasks.create') }}"
+      <a href="{{ route('admin.tasks.create') }}"
          class="block bg-white rounded-lg border hover:shadow-md transition p-6">
         <div class="flex items-center">
           <div class="bg-green-500 p-3 rounded shadow-inner">
@@ -86,11 +87,13 @@
                   <div class="text-sm text-gray-500">{{ $intern->email }}</div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <form action="{{ route('admin.delete-user', $intern->id) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this intern?');">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="text-red-600 hover:text-red-900">Delete</button>
-                  </form>
+                  <button onclick="openInternDeleteModal({{ $intern->id }})" 
+                          class="text-red-600 hover:text-red-900 flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete
+                  </button>
                 </td>
               </tr>
             @empty
@@ -154,8 +157,8 @@
                   </div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <a href="{{ route('tasks.edit', $task->id) }}" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</a>
-                  <form action="{{ route('tasks.destroy', $task->id) }}" method="POST" class="inline">
+                  <a href="{{ route('admin.tasks.edit', $task->id) }}" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</a>
+                  <form action="{{ route('admin.tasks.destroy', $task->id) }}" method="POST" class="inline">
                     @csrf
                     @method('DELETE')
                     <button type="submit" class="text-red-600 hover:text-red-900">Delete</button>
@@ -174,5 +177,59 @@
   </div>
 </div>
 
+<!-- Intern Delete Confirmation Modal -->
+@foreach($interns as $intern)
+<div id="internDeleteModal{{ $intern->id }}" class="hidden fixed inset-0 bg-gray-600/50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3 text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+            </div>
+            <h3 class="text-lg leading-6 font-medium text-gray-900 mt-4">Delete Intern</h3>
+            <div class="mt-2 px-7 py-3">
+                <p class="text-sm text-gray-500">
+                    Are you sure you want to delete this intern? This will also remove them from all assigned tasks.
+                </p>
+            </div>
+            <div class="flex justify-center gap-4 mt-3">
+                <button onclick="closeInternDeleteModal({{ $intern->id }})"
+                        class="px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-md shadow-sm hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-300">
+                    Cancel
+                </button>
+                <form action="{{ route('admin.delete-user', $intern->id) }}" method="POST" class="inline">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit"
+                            class="px-4 py-2 bg-red-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">
+                        Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@endforeach
+
 <!-- Message Modal -->
+
+<script>
+// Add these new functions for intern deletion modal
+function openInternDeleteModal(internId) {
+    document.getElementById('internDeleteModal' + internId).classList.remove('hidden');
+}
+
+function closeInternDeleteModal(internId) {
+    document.getElementById('internDeleteModal' + internId).classList.add('hidden');
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    if (event.target.classList.contains('fixed')) {
+        event.target.classList.add('hidden');
+    }
+}
+</script>
+
 @endsection

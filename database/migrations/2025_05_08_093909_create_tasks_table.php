@@ -17,7 +17,7 @@ return new class extends Migration
             $table->text('description');
             $table->enum('status', ['pending', 'todo', 'in_progress', 'completed'])->default('pending');
             $table->date('due_date');
-            $table->foreignId('created_by')->constrained('users');
+            $table->foreignId('created_by');
             $table->timestamps();
         });
     }

@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('Layouts.app')
 
 @section('content')
 <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
@@ -53,7 +53,7 @@
                                     <div class="text-sm text-gray-500">{{ $task->due_date ? date('M d, Y', strtotime($task->due_date)) : 'No due date' }}</div>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <form action="{{ route('intern.update-task-status', $task->id) }}" method="POST" class="inline">
+                                    <form action="{{ route('intern.tasks.update-task-status', $task->id) }}" method="POST" class="inline">
                                         @csrf
                                         @method('PUT')
                                         <select name="status" onchange="this.form.submit()" 
@@ -129,7 +129,7 @@
                 </div>
 
                 <!-- Add Comment Form -->
-                <form action="{{ route('comments.store', $task->id) }}" method="POST" class="space-y-4">
+                <form action="{{ route('intern.comments.store', $task->id) }}" method="POST" class="space-y-4">
                     @csrf
                     <div>
                         <label for="content" class="block text-sm font-medium text-gray-700 mb-1">Add Comment</label>

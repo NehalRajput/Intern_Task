@@ -13,7 +13,7 @@
         </div>
 
         <div class="mt-10 text-center space-y-4">
-            <a href="{{ route('intern.tasks') }}" 
+            <a href="{{ route('intern.tasks.index') }}" 
                class="inline-block rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">
                 View My Tasks
             </a>

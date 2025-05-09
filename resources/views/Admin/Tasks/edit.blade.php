@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('Layouts.app')
 
 @section('content')
 <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
@@ -24,7 +24,7 @@
             </div>
 
             <!-- Form -->
-            <form method="POST" action="{{ isset($task) ? route('tasks.update', $task) : route('tasks.store') }}" class="divide-y divide-gray-200">
+            <form method="POST" action="{{ isset($task) ? route('admin.tasks.update', $task) : route('admin.tasks.store') }}" class="divide-y divide-gray-200">
                 @csrf
                 @if(isset($task)) @method('PUT') @endif
 
